@@ -1,6 +1,7 @@
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt-nodejs');
 var Promise = require('bluebird');
+var crypto = require('crypto');
 
 mongoose.connect('mongodb://localhost/test');
 
@@ -32,21 +33,26 @@ userSchema.methods.comparePassword = function(attemptedPassword, callback) {
   });
 };
 
-userSchema.methods.hashPassword = function() {
-  var cipher = Promise.promisify(bcrypt.hash);
-  return cipher(this.get('password'), null, null).bind(this)
-    .then(function(hash) {
-      this.set('password', hash);
-    });
-};
+userSchema.pre('save', function(next) {
+  if (this.isNew) {
+    var cipher = Promise.promisify(bcrypt.hash);
+    cipher(this.get('password'), null, null).bind(this)
+      .then(function(hash) {
+        this.password = hash;
+        next();
+      });
+  }
+  next();
+});
 
-/* link */ initialize = function() {
-  this.on('creating', function(model, attrs, options) {
+linkSchema.pre('save', function(next) {
+  if (this.isNew) {
     var shasum = crypto.createHash('sha1');
-    shasum.update(model.get('url'));
-    model.set('code', shasum.digest('hex').slice(0, 5));
-  });
-};
+    shasum.update(this.url);
+    this.code = shasum.digest('hex').slice(0, 5);
+  }
+  next();
+});
 
 exports.userSchema = userSchema;
 exports.linkSchema = linkSchema;

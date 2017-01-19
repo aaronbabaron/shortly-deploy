@@ -7,8 +7,12 @@ module.exports = function(grunt) {
         separator: ';',
       },
       dist: {
-        src: ['public/lib/*.js', 'public/client/*.js'],
-        dest: 'public/dist/build.js',
+        src: ['public/client/*.js'],
+        dest: 'public/dist/build.js'
+      },
+      library: {
+        src: ['public/lib/jquery.js', 'public/lib/underscore.js', 'public/lib/backbone.js', 'public/lib/handlebars.js'],
+        dest: 'public/lib/library.js'
       }
     },
 
@@ -28,9 +32,13 @@ module.exports = function(grunt) {
     },
 
     uglify: {
+      options: {
+        mangle: false
+      },
       my_target: {
         files: {
-          'public/dist/build.min.js': ['public/dist/build.js']
+          'public/dist/build.min.js': ['public/dist/build.js'],
+          'public/dist/library.min.js': ['public/lib/library.js']
         }
       }
     },
@@ -73,7 +81,7 @@ module.exports = function(grunt) {
 
     shell: {
       prodServer: {
-        command: 'git push live master'
+        command: 'node server.js'
       }
     },
   });
@@ -117,7 +125,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('deploy', function(n) {
     if (grunt.option('prod')) {
-      grunt.task.run(['test', 'upload']);
+      grunt.task.run(['test', 'build', 'upload']);
     } else {
       grunt.task.run(['test', 'build', 'upload']);
     }
